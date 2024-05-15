@@ -1,0 +1,89 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from heapq import heappop, heappush
+
+# Heuristic function for A* (Manhattan distance)
+def heuristic(a, b):
+    return abs(a[0] - b[0]) + abs(a[1] - b[1])
+
+# A* algorithm implementation
+def astar(grid, start, goal):
+    neighbors = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+    close_set = set()
+    came_from = {}
+    gscore = {start: 0}
+    fscore = {start: heuristic(start, goal)}
+    open_set = []
+
+    heappush(open_set, (fscore[start], start))
+    
+    while open_set:
+        _, current = heappop(open_set)
+        
+        if current == goal:
+            data = []
+            while current in came_from:
+                data.append(current)
+                current = came_from[current]
+            return data[::-1]  # Reverse path
+        
+        close_set.add(current)
+        
+        for i, j in neighbors:
+            neighbor = current[0] + i, current[1] + j
+            
+            tentative_g_score = gscore[current] + 1
+            
+            if 0 <= neighbor[0] < grid.shape[0]:
+                if 0 <= neighbor[1] < grid.shape[1]:
+                    if grid[neighbor[0]][neighbor[1]] == 1:
+                        continue
+                else:
+                    # grid boundary
+                    continue
+            else:
+                # grid boundary
+                continue
+            
+            if neighbor in close_set and tentative_g_score >= gscore.get(neighbor, 0):
+                continue
+            
+            if  tentative_g_score < gscore.get(neighbor, 0) or neighbor not in [i[1] for i in open_set]:
+                came_from[neighbor] = current
+                gscore[neighbor] = tentative_g_score
+                fscore[neighbor] = tentative_g_score + heuristic(neighbor, goal)
+                heappush(open_set, (fscore[neighbor], neighbor))
+    
+    return False
+
+# Define grid size and obstacles
+grid_size = (20, 20)
+grid = np.zeros(grid_size)
+
+# Add obstacles to the grid
+obstacles = [
+    (5, 5), (5, 6), (5, 7), (5, 8), (5, 9),
+    (10, 10), (10, 11), (10, 12), (10, 13),
+    (15, 5), (15, 6), (15, 7), (15, 8), (15, 9)
+]
+
+for obstacle in obstacles:
+    grid[obstacle] = 1
+
+# Define start and goal points
+start = (0, 0)
+goal = (19, 19)
+
+# Run A* algorithm
+path = astar(grid, start, goal)
+
+# Visualize the grid and path
+if path:
+    for point in path:
+        grid[point] = 0.5
+
+plt.imshow(grid, cmap='gray')
+plt.scatter(start[1], start[0], color='green', marker='o', label='Start')
+plt.scatter(goal[1], goal[0], color='red', marker='x', label='Goal')
+plt.legend()
+plt.show()
